@@ -1,0 +1,44 @@
+# ------------------------------
+# Architecture
+# ------------------------------
+ProjectionHead:
+    conv_channels = (32, 32)
+    # [修改] AES Probabilistic: 4 mean + 4 var + 6 cov = 14
+    dense_neurons = (64, 32, 14) 
+    use_poolings = (True, True)
+    use_normalizations = (True, True)
+    kernel_size = 5
+    pool_size = 5
+    dropout_rate = 0.3
+    apply_linear_transform = True
+    # [新增] MOS 1-10 的初始化縮放
+    output_scale = 4.5
+    output_bias = 5.5
+
+# ------------------------------
+# Dataset
+# ------------------------------
+# [修改] 使用 AESFeatures
+get_dataloader:
+    num_workers = 4
+    shuffle = True
+
+TrainingLoop:
+    num_epochs = 30
+    model = @ProjectionHead
+    learning_rate = 1e-4
+    weight_decay = 1e-4
+    batch_size_train = 64
+    ssl_layer = 11
+    dataset_cls = @AESFeatures  # 指定 AES Dataset
+    loss_type = 'mgnll'
+    
+    # 預設參數 (可由命令行覆蓋)
+    covarreg_use = False
+    covarreg_lambda = 0.1
+
+# AES 資料集參數
+AESFeatures:
+    dataset_name = 'audiomos2025-track2-train_list_filter'
+    domain_grouping_strategy = 'none'
+    num_random_domains = 1

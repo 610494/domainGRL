@@ -1,0 +1,51 @@
+# # DANN-based Multi-Domain Training
+
+# ------------------------------
+# Architecture
+# ------------------------------
+# [Update] Class name to Multi
+DANNProjectionHeadMulti:
+    conv_channels = (32, 32)
+    dense_neurons = (64, 32, 14)      
+    
+    domain_classifier_neurons = (64, 32)
+    # domain_configs injected via python script
+
+    use_poolings = (True, True)
+    use_normalizations = (True, True)
+  
+    kernel_size = 5
+    pool_size = 5
+    dropout_rate = 0.3
+    apply_linear_transform = True
+    output_scale = 4.5
+    output_bias = 5.5
+
+# ------------------------------
+# Dataset
+# ------------------------------
+get_dataloader:
+    num_workers = 4
+    shuffle = True
+
+# [Update] Class name to Multi
+AESFeaturesMulti:
+    dataset_name = 'audiomos2025-track2-train_list_filter'
+
+# ------------------------------
+# Training loop
+# ------------------------------
+# [Update] Class name to Multi
+TrainingLoopMulti:
+    num_epochs = 30
+    model = @DANNProjectionHeadMulti
+    learning_rate = 1e-4
+    weight_decay = 0.0
+    batch_size_train = 64
+    ssl_layer = 11
+    dataset_cls = @AESFeaturesMulti
+    loss_type = 'mgnll'
+    
+    covarreg_use = False
+    covarreg_lambda = 0.1
+    domain_weight = 1.0

@@ -1,0 +1,63 @@
+# DANN-based training for AES dataset.
+
+# ------------------------------
+# Architecture
+# ------------------------------
+NUM_DOMAINS = 2 # Default, will be overridden by python script for GT strategy
+DANNProjectionHead:
+    conv_channels = (32, 32)
+    # AES Probabilistic: 4 mean + 4 var + 6 cov = 14
+    dense_neurons = (64, 32, 14)      
+    
+    # --- Domain Classifier ---
+    domain_classifier_neurons = (64, 32)
+    num_domains = %NUM_DOMAINS
+
+    use_poolings = (True, True)
+    use_normalizations = (True, True)
+    kernel_size = 5
+    pool_size = 5
+    dropout_rate = 0.3
+    apply_linear_transform = True
+    
+    # AES Scaling (1-10)
+    output_scale = 4.5
+    output_bias = 5.5
+
+# ------------------------------
+# Dataset
+# ------------------------------
+get_dataloader:
+    num_workers = 4
+    shuffle = True
+
+AESFeatures:
+    dataset_name = 'audiomos2025-track2-train_list_filter'
+    domain_grouping_strategy = 'GT'
+    num_random_domains = %NUM_DOMAINS
+
+# ------------------------------
+# Training loop
+# ------------------------------
+TrainingLoop:
+    num_epochs = 30
+    model = @DANNProjectionHead
+    learning_rate = 1e-4
+    weight_decay = 0.0
+    batch_size_train = 64
+    ssl_layer = 11
+    dataset_cls = @AESFeatures
+    loss_type = 'mgnll'
+    
+    # --- Regularization Settings ---
+    covarreg_use = True
+    covarreg_lambda = 0.1
+    domain_weight = 1.0
+    
+    # Ground Truth Correlation Matrix (Calculated from Training Set)
+    prior_corr_matrix = [
+        [1.0, -0.15199917191945386, 0.769540698606693, 0.9247316714193203],
+        [-0.15199917191945386, 1.0, -0.003230790603689048, -0.12027347350353193],
+        [0.7695406986066929, -0.0032307906036890474, 1.0, 0.8344445238327228],
+        [0.9247316714193202, -0.12027347350353193, 0.8344445238327228, 1.0]
+    ]

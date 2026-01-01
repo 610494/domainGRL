@@ -1,0 +1,56 @@
+# Prototype-based training (No Domain Adversarial).
+
+# ------------------------------
+# Architecture
+# ------------------------------
+NUM_PROTOTYPES = 10
+
+PrototypicalHead:
+    conv_channels = (32, 32)
+    # AES Probabilistic: 14 outputs
+    dense_neurons = (64, 32, 14)      
+    
+    use_poolings = (True, True)
+    use_normalizations = (True, True)
+    kernel_size = 5
+    pool_size = 5
+    dropout_rate = 0.3
+    apply_linear_transform = True
+
+    # AES Specifics (1-10)
+    output_scale = 4.5
+    output_bias = 5.5
+    num_dims = 4
+
+    # Prototype Config
+    proto_embed_dim = 64
+    num_prototypes = %NUM_PROTOTYPES
+
+# ------------------------------
+# Dataset
+# ------------------------------
+get_dataloader:
+    num_workers = 4
+    shuffle = True
+
+# 這裡仍然使用 AESFeatures，但 model 不會用到 domain labels
+AESFeatures:
+    dataset_name = 'audiomos2025-track2-train_list_filter'
+    domain_grouping_strategy = 'GT' 
+
+# ------------------------------
+# Training loop
+# ------------------------------
+TrainingLoop:
+    num_epochs = 30
+    model = @PrototypicalHead
+    learning_rate = 1e-4
+    weight_decay = 0.0
+    batch_size_train = 64
+    ssl_layer = 11
+    dataset_cls = @AESFeatures
+    loss_type = 'mgnll'
+    
+    covarreg_use = False
+    covarreg_lambda = 0.1
+    num_prototypes = %NUM_PROTOTYPES
